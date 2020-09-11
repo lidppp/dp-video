@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<style>
+    body{
+        background: rgba(0,0,0,0.3);
+    }
+    .videoParent {
+        width: 700px;
+        height: 700px;
+        background: antiquewhite;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+
+<div class="videoParent">
+
+</div>
+</body>
+<script>
+    console.dir(dpVideo)
+    // videoL.showBig("asdsad")
+    var videol =
+        new dpVideo(document.querySelector(".videoParent"), ["/video/1.mp4",{defaultId:1,urlList:[{id:1,url:"/video/1.mp4",label:"清晰度1"},{id:2,url:"/video/mov_bbb.mp4",label:"清晰度2"}]},"/video/mov_bbb.mp4"]);
+    console.log(videol);
+
+
+    // // 播放器按钮测试用例
+    // var pause = document.querySelector('.pause');
+    // var play = document.querySelector('.play');
+    // var btn = document.querySelector('#play_box');
+    //
+    // btn.addEventListener('click', () => {
+    //     if (play.classList.contains("active")) {
+    //         play.classList.remove("active");
+    //         pause.classList.add("active");
+    //     } else {
+    //         pause.classList.remove("active");
+    //         play.classList.add("active");
+    //     }
+    // })
+
+    // 设置谷歌媒体控制器的封面
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: '11111',
+            artist: '2222',
+            album: 'W333',
+            artwork: [
+                {src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png'},
+            ]
+        });
+
+        // navigator.mediaSession.setActionHandler('play', function() {
+        //     console.log("hello")
+        // });
+        // navigator.mediaSession.setActionHandler('pause', function() {
+        //     console.log("hello")
+        //
+        // });
+        // navigator.mediaSession.setActionHandler('seekbackward', function() {});
+        // navigator.mediaSession.setActionHandler('seekforward', function() {});
+        // // navigator.mediaSession.setActionHandler('previoustrack', function() {});
+        // // navigator.mediaSession.setActionHandler('nexttrack', function() {});
+    }
+</script>
+</html>

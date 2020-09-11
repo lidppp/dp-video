@@ -1,0 +1,258 @@
+.dp-video-player * {
+    user-select: none;
+    /*word-break: keep-all;*/
+    white-space:nowrap;
+}
+
+
+.dp-play-btn, .dp-pause-btn, .dp-volume, .dp-popWindow-player, .dp-document-full-screen, .dp-window-full-screen ,.dp-next-btn{
+    font-size: 26px;
+    line-height: 44px;
+    display: none;
+    cursor: pointer;
+}
+
+.dp-play-btn.active, .dp-pause-btn.active, .dp-volume.active, .dp-popWindow-player.active, .dp-document-full-screen.active, .dp-window-full-screen.active ,.dp-next-btn.active{
+    display: block;
+}
+
+.dp-volume {
+    font-size: 24px;
+}
+
+.dp-popWindow-player, .dp-document-full-screen, .dp-window-full-screen {
+    font-size: 22px;
+    width: 44px;
+    text-align: center;
+}
+
+.dp-contrller {
+    position: absolute;
+    display: flex;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    width: 98%;
+    /*overflow: hidden;*/
+    background: transparent;
+    /*background: green;*/
+    justify-content: space-between;
+    color: #fff;
+    margin: 0 auto;
+}
+
+.dp-flexbox {
+    display: flex;
+    justify-content: space-between;
+}
+
+.dp-time {
+    line-height: 44px;
+}
+
+.dp-time.dp-action-time {
+    margin-left: 8px;
+}
+
+.dp-action-time::after {
+    content: "/";
+    margin: 0 5px;
+}
+
+
+/* 网页全屏*/
+.dp-webfullscreen {
+    position: fixed !important;
+    border-radius: 0 !important;
+    z-index: 100000 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+}
+
+/*倍速按钮*/
+.dp-playback-rate-base {
+    line-height: 44px;
+    position: relative;
+    text-align: center;
+    padding: 0 8px;
+    width: 50px;
+}
+
+.dp-playback-rate-base .dp-playback-rate-box {
+    display: flex;
+    flex-direction: column-reverse;
+    position: absolute;
+    bottom: 37px;
+    left: 0;
+    line-height: normal;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    opacity: 0;
+    transition: 0.5s all;
+    z-index: 2;
+
+}
+
+.dp-playback-rate-base:hover .dp-playback-rate-box {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.dp-playback-rate-base .dp-playback-rate-box .dp-playback-rate-list {
+    text-align: center;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: 0.5s all;
+
+}
+
+.dp-playback-rate-base .dp-playback-rate-box .dp-playback-rate-list:hover {
+    background: rgba(0, 0, 0, 0.5);
+    color: #91bef0;
+}
+
+.dp-playback-rate-base .dp-playback-rate-box .dp-playback-rate-list.active {
+    color: #91bef0;
+}
+
+/*音量控制*/
+.dp-volume-box {
+    position: relative;
+    width: 48px;
+    text-align: center;
+
+}
+
+.dp-volume-box .dp-volume-contrller {
+    position: absolute;
+    text-align: center;
+    width: 48px;
+    background: rgba(0, 0, 0, .5);
+    left: 50%;
+    bottom: 37px;
+    transform: translateX(-50%);
+    padding: 8px;
+    box-sizing: border-box;
+    transition: opacity 0.5s;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.dp-volume-box:hover .dp-volume-contrller {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dp-volume-box .dp-volume-contrller .dp-volume-msg {
+    margin-bottom: 12px;
+    display: block;
+}
+
+.dp-volume-box .dp-volume-contrller .dp-volume-contrller-box {
+    height: 100px;
+    width: 5px;
+    background: rgba(204, 204, 204, .5);
+    margin: 0 auto;
+    position: relative;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.dp-volume-box .dp-volume-contrller .dp-volume-contrller-box .dp-volume-contrller-point {
+    position: absolute;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #FFF;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+    cursor: pointer;
+    transition: background-color .5s, box-shadow .5s;
+    z-index: 1;
+}
+
+.dp-volume-box .dp-volume-contrller .dp-volume-contrller-box .dp-volume-contrller-point:hover, .dp-volume-box .dp-volume-contrller .dp-volume-contrller-box .dp-volume-contrller-point:active {
+    background: #91bef0;
+    box-shadow: rgba(255, 255, 255, 0.5) 0 0 6px 3px;
+}
+
+.dp-volume-box .dp-volume-contrller .dp-volume-contrller-box .dp-volume-contrller-bg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 0;
+    border-radius: 5px;
+    background: rgba(145, 190, 240, 0.8);
+}
+
+/* 进度条 */
+.dp-time-contrller {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+
+}
+
+.dp-time-contrller .dp-time-contrller-box {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    cursor: pointer;
+}
+
+.dp-time-contrller .dp-time-contrller-box::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 0;
+    width: 100%;
+    background-color: rgba(204, 204, 204, .5);
+    height: 4px;
+
+
+}
+
+.dp-time-contrller .dp-time-contrller-box .dp-time-contrller-point {
+    position: absolute;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #FFF;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: background-color .5s, box-shadow .5s, left 0ms;
+    z-index: 1;
+}
+
+.dp-time-contrller .dp-time-contrller-box .dp-time-contrller-point:hover, .dp-time-contrller .dp-time-contrller-box .dp-time-contrller-point:active {
+    background: #91bef0;
+    box-shadow: rgba(255, 255, 255, 0.5) 0 0 6px 3px;
+}
+
+.dp-time-contrller .dp-time-contrller-box .dp-time-contrller-bg {
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 0;
+    height: 4px;
+    background: rgba(145, 190, 240, 0.8);
+    pointer-events: none;
+}
+
+/*选择清晰度*/
+
+.dp-definition-base{
+    width: auto;
+}
