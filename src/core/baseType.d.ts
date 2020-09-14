@@ -1,14 +1,11 @@
 // videoList 四种数据格式
-// 如果传入的videoUrl的格式为2或者4的话 显示下一个
-// 如果传入的videoUrl格式为3,4 显示清晰度
 // 格式1 : "http://asdasd"
-// 格式2 : ["http://asdasd","http://asdasd"]
-// 格式3 : {defaultId:0,urlList:[{id:0,url:'http://asdasd',label:'360P'}]}
-// 格式4 : [{defaultId:0,urlList:[{id:0,url:'http://asdasd',label:'360P'}]},{defaultId:0,urlList:[{id:0,url:'http://asdasd',label:'360P'}]}]
+// 格式2 : [{defaultId:0,urlList:[{id:0,url:'http://asdasd',label:'360P'}]}}]
 
 
 export interface urlFormat1 {
     defaultId:number|string,
+    label?:"",
     urlList: Array<urlFormat2>
 }
 export interface urlFormat2 {

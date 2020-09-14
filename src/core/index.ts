@@ -1,9 +1,10 @@
 import {
-    urlFormat1, urlFormat2 ,
+    urlFormat1, urlFormat2,
     optionsFormat, UrlListType
 } from "./baseType"
 import Controller from "./creatController";
-import { whatUrlType,styleList} from "./utils"
+import Barrage,{BarrageBaseType} from "./barrage";
+import {whatUrlType, styleList} from "./utils"
 
 export default class Core {
     // 传入的父级dom节点
@@ -11,7 +12,7 @@ export default class Core {
     p_width: number = null;
     p_height: number = null;
 
-    lp_player_box:HTMLElement = document.createElement("div");
+    lp_player_box: HTMLElement = document.createElement("div");
     // 生成子级dom
     // video Dom节点
     videoDom: HTMLVideoElement = document.createElement('video');
@@ -21,7 +22,6 @@ export default class Core {
     // 中转canvas节点
     centerCanvasDom: HTMLCanvasElement = document.createElement("canvas");
     centerCan = this.centerCanvasDom.getContext("2d");
-    centerCanvasFrame: number = null;
     drup_width: number = null
     drup_height: number = null
     drup_top: number = null
@@ -29,14 +29,13 @@ export default class Core {
     // 最后输出的canvas节点
     finalCanvasDom: HTMLCanvasElement = document.createElement("canvas");
     finalCan = this.finalCanvasDom.getContext("2d");
-    finalCanvasFrame: number = null;
 
     // 控制条dom
     controller: Controller = undefined;
     // baseUrlList
     baseUrlList: UrlListType = undefined;
     selectUrlListIndex: number = null;
-    maxListindex:number = null
+    maxListindex: number = null;
 
     // 基本设置
     baseOptions: optionsFormat = {
@@ -59,7 +58,7 @@ export default class Core {
             playbackRateList: [
                 {speed: 0.5, label: "0.5x"},
                 {speed: 0.75, label: "0.75x"},
-                {speed: 1.0, label: "1.0x",default:true},
+                {speed: 1.0, label: "1.0x", default: true},
                 {speed: 1.25, label: "1.25x"},
                 {speed: 1.5, label: "1.5x"},
                 {speed: 2.0, label: "2.0x"},
@@ -69,61 +68,87 @@ export default class Core {
             windowFull: true, // 全屏 默认true
             Mirror: false // 镜像 默认false
         },
-        _parentSelf:this
+        _parentSelf: this
     };
 
     //渲染canvas的 requestAnimationFrameID
-    reqAFId:number = null;
+    reqAFId: number = null;
+
+    // 弹幕
+    barrage:Barrage = undefined;
+
 
 
     constructor(parentNode: HTMLElement, urlList: UrlListType, options?: optionsFormat) {
+        // 初始化外部传入的dom
         this.parentDom = parentNode;
         this.p_width = this.parentDom.offsetWidth;
         this.p_height = this.parentDom.offsetHeight;
         this.baseUrlList = urlList;
-
+        // 合并配置项
         Object.assign(this.baseOptions, options)
-        if(whatUrlType(urlList) === 2){
+        // 判断传入的是否是数组
+        if (whatUrlType(urlList) === 2) {
             this.selectUrlListIndex = 0;
-            this.maxListindex = urlList.length-1
+            this.maxListindex = urlList.length - 1
+            // 设置子元素的样式以及属性
             this.setChildDom(
-                typeof this.baseUrlList[this.selectUrlListIndex]=="string" ?
-                (this.baseUrlList as Array<string>)[this.selectUrlListIndex] : this.getUrl(<urlFormat1>this.baseUrlList[this.selectUrlListIndex])
+                typeof this.baseUrlList[this.selectUrlListIndex] == "string" ?
+                    (this.baseUrlList as Array<string>)[this.selectUrlListIndex] : this.getUrl(<urlFormat1>this.baseUrlList[this.selectUrlListIndex])
             );
-        }else{
-            this.setChildDom(urlList);
+        } else {
+            this.setChildDom(urlList as string);
         }
-        this.controller = new Controller(this.videoDom, this.lp_player_box , this.baseOptions);
 
+        let danmuArr:Array<BarrageBaseType> = [
+            {msg:"Lidppp",timePoint:1,color:"blue",position:"move"},
+            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:1,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:2,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:3,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:4,color:"red",position:"top"},
+            {msg:"Lidppp",timePoint:5,color:"red",position:"bottom"},
+            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:5,color:"red",position:"top"},
+            {msg:"Lidppp",timePoint:4,color:"red",position:"bottom"},
+            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
+            {msg:"Lidppp",timePoint:11,color:"red",position:"top"},
+            {msg:"Lidppp",timePoint:13,color:"red",position:"bottom"},
+        ]
+        // 创建弹幕
+        this.barrage = new Barrage(this.lp_player_box,danmuArr,this.baseOptions)
+
+        // 创建控制条
+        this.controller = new Controller(this.videoDom, this.lp_player_box, this.baseOptions);
+
+
+        // 插入到传入元素中
         this.joinHtml();
-        this.videoAddCanplay();
-
-        // if(typeof urlList == "object" && urlList.length > 0){
-        //     if((options.controllerOption && options.controllerOption.next === undefined) || !options.controllerOption){
-        //         this.baseOptions.controllerOption.next = true;
-        //     }
-        // }
-        // let parent_width:number = this.parentDom.
+        // 给video添加事件
+        this.videoBindEvent();
     }
 
     // 元素插入html中
     joinHtml(): void {
-        this.videoDom = this.lp_player_box.appendChild(this.videoDom);
-        this.centerCanvasDom = this.lp_player_box.appendChild(this.centerCanvasDom);
-        this.finalCanvasDom = this.lp_player_box.appendChild(this.finalCanvasDom);
+        this.lp_player_box.appendChild(this.videoDom);
+        this.lp_player_box.appendChild(this.centerCanvasDom);
+        this.lp_player_box.appendChild(this.finalCanvasDom);
         this.lp_player_box.appendChild(this.controller.getElement());
-        this.parentDom.appendChild( this.lp_player_box)
+        this.lp_player_box.appendChild(this.barrage.getElement());
+        this.parentDom.appendChild(this.lp_player_box)
     }
 
     // 设置创建出来的元素的数据
-    setChildDom(urlList: UrlListType): void {
+    setChildDom(urlList: string): void {
         this.lp_player_box.classList.add("dp-video-player")
-        styleList(this.lp_player_box,{
-            width: this.p_width + "px",
-            height: this.p_height + "px",
-            background:'#000',
-            position:"relative",
-            overflowL:"hidden"
+        styleList(this.lp_player_box, {
+            width: "100%",
+            height: "100%",
+            background: '#000',
+            position: "relative",
+            overflowL: "hidden"
         })
 
         styleList(this.videoDom, {width: this.p_width + "px", height: this.p_height + "px", display: 'none'})
@@ -155,38 +180,48 @@ export default class Core {
         this.reqAFId = requestAnimationFrame(this.listenVideo.bind(this));
     }
 
-    // 给video添加canplay函数
-    videoAddCanplay() {
-        this.videoDom.addEventListener('canplay',() => {
+    // 给video添加事件处理函数
+    videoBindEvent() {
+        this.videoDom.addEventListener('canplay', () => {
             this.video_width = this.videoDom.videoWidth;
             this.video_height = this.videoDom.videoHeight;
             this.recalculateDrawingPosition(false)
 
         })
-        this.videoDom.addEventListener("play",() => {
+        this.videoDom.addEventListener("play", () => {
             this.listenVideo()
         })
-        this.videoDom.addEventListener("pause",() => {
+        this.videoDom.addEventListener("pause", () => {
             cancelAnimationFrame(this.reqAFId);
         })
 
-        window.addEventListener("resize", ()=>{
+
+
+        window.addEventListener("resize", () => {
             this.recalculateDrawingPosition(false)
         })
     }
 
     // 计算绘图位置, 不计算会导致渲染出来的画面变形
-    countWhereDrop(flag:boolean = true): void {
-        if((flag && this.p_width == this.lp_player_box.offsetWidth && this.p_width != null) || (flag && this.p_height == this.lp_player_box.offsetHeight && this.p_height != null)){
-           return
+    countWhereDrop(flag: boolean = true): void {
+        if ((flag && this.p_width == this.lp_player_box.offsetWidth && this.p_width != null) || (flag && this.p_height == this.lp_player_box.offsetHeight && this.p_height != null)) {
+            return
         }
-
         this.p_width = this.lp_player_box.offsetWidth;
         this.p_height = this.lp_player_box.offsetHeight;
         this.centerCanvasDom.width = this.p_width;
         this.centerCanvasDom.height = this.p_height;
         this.finalCanvasDom.width = this.p_width;
         this.finalCanvasDom.height = this.p_height;
+
+        /*
+        * 需要保证比例不变
+        * 公式  变形值x = 原始值y * 变形值y / 原始值 x
+        * 假设原始为 240 w , 300 h
+        *    变形为 500 w , x h
+        *       240 / 300 == 500 / x
+        *       x = (300 * 500) / 240
+        * */
 
         // 竖屏
         if (this.video_height > this.video_width) {
@@ -203,38 +238,59 @@ export default class Core {
         }
 
         // 如果横屏的放到画面上的高度比p_height大的话以竖屏处理
-        if(this.drup_height > this.p_height){
+        if (this.drup_height > this.p_height) {
             this.drup_top = 0
             this.drup_height = this.p_height;
             this.drup_width = this.video_width * (this.p_height / this.video_height);
             this.drup_left = Math.abs((this.p_width - this.drup_width)) / 2;
         }
+        // 父元素大小改变事件触发
+        this.lp_player_box.dispatchEvent(this.parentSizeChange())
+
     }
 
     // 重新计算绘画位置并且重绘
-    recalculateDrawingPosition(flag:boolean=true){
+    recalculateDrawingPosition(flag: boolean = true) {
         this.countWhereDrop(flag);
         this.listenVideo()
-        setTimeout(()=>{
+        setTimeout(() => {
             cancelAnimationFrame(this.reqAFId);
         })
     }
 
     // 修改video src
-    changeVideoSrc(){
-        let src = typeof this.baseUrlList[this.selectUrlListIndex]=="string" ? (this.baseUrlList as Array<string>)[this.selectUrlListIndex] : this.getUrl(<urlFormat1>this.baseUrlList[this.selectUrlListIndex])
+    changeVideoSrc() {
+        let src = typeof this.baseUrlList[this.selectUrlListIndex] == "string" ? (this.baseUrlList as Array<string>)[this.selectUrlListIndex] : this.getUrl(<urlFormat1>this.baseUrlList[this.selectUrlListIndex])
         this.videoDom.src = src;
         this.controller.unload();
         this.lp_player_box.appendChild(this.controller.getElement());
+        this.barrage.resetRenderAndPosition();
     }
+
     // 获取url
-    getUrl(item:urlFormat1):string{
+    getUrl(item: urlFormat1): string {
         let id = item.defaultId;
-        let selectList:Array<urlFormat2> = item.urlList.filter((obj:urlFormat2) => {
+        let selectList: Array<urlFormat2> = item.urlList.filter((obj: urlFormat2) => {
             return obj.id === id;
         })
         return selectList[0].url
     }
+
+    // 父元素大小改变事件
+    parentSizeChange ():CustomEvent {
+        return new CustomEvent<any>("parentSizeChange",{detail:{
+                width:this.p_width,
+                height:this.p_height,
+            }})
+    }
+
+    /**
+     * 更新弹幕
+     */
+    setBarrage(barrageList:Array<BarrageBaseType>){
+        this.barrage.setRenderBarrageArray(barrageList);
+    }
+
 
     // 创建拓展接口, 后续可能会用到 先写上
     /*

@@ -21,7 +21,8 @@ export default class Controller {
     nextBtn: HTMLElement = undefined; // 下一P
     selectSrc: HTMLElement = undefined; // 选集
     selectDefinition:HTMLElement = undefined; //选择清晰度
-    progressBarChange:CustomEvent = new CustomEvent("progressBarChange") // 创建进度条改变事件
+    progressBarChange:CustomEvent = new CustomEvent("progressBarChange",{detail:{timeJump:false}}) // 创建进度条改变事件
+    progressBarJumpChange:CustomEvent = new CustomEvent("progressBarChange",{detail:{timeJump:true}}) // 创建进度条改变事件
     options: optionsFormat = undefined; // 外层传入配置
     reqAFId: number = null; // 渲染id  优化用
 
@@ -120,8 +121,8 @@ export default class Controller {
         /*
         * 右侧盒子
         * 从左到右:
-        *   清晰度
         *   倍速 √
+        *   清晰度
         *   声音 √
         *   画中画 √
         *   网页全屏 √
@@ -410,7 +411,6 @@ export default class Controller {
         })
         // 视频播放触发
         this.video.addEventListener("play", () => {
-            this.endTime.innerText = formatTime(this.video.duration);
             this.changeBtn(true);
             this.changeActionTime();
         })
@@ -435,9 +435,7 @@ export default class Controller {
             }
         })
 
-        this.video.addEventListener("progressBarChange",()=>{
-            console.log("进度条改变事件触发")
-        })
+
 
         // 绑定window按键事件
         window.addEventListener("keydown", (e) => {
@@ -471,6 +469,7 @@ export default class Controller {
 
             // esc退出全屏和网页全屏
             if (e.code === "Escape") {
+                e.preventDefault();
                 let isFull = !!((document as any).webkitIsFullScreen || (document as any).mozFullScreen ||
                     (document as any).msFullscreenElement || document.fullscreenElement
                 )
@@ -482,7 +481,7 @@ export default class Controller {
                 return;
 
             }
-
+            // 键盘 ↑ 控制音量增0.1
             if (e.code === "ArrowUp") {
                 if (this.video.volume + 0.1 >= 1) {
                     this.changeVolumeFn(1);
@@ -491,6 +490,7 @@ export default class Controller {
                 this.changeVolumeFn(this.video.volume += 0.1);
                 return;
             }
+            // 键盘 ↓ 控制音量减0.1
             if (e.code === "ArrowDown") {
                 if (this.video.volume - 0.1 <= 0) {
                     this.changeVolumeFn(0);
@@ -499,6 +499,10 @@ export default class Controller {
                 this.changeVolumeFn(this.video.volume -= 0.1);
                 return;
             }
+        })
+
+        window.addEventListener("resize",()=>{
+            this.changeActionTime()
         })
     }
 
@@ -532,14 +536,9 @@ export default class Controller {
         let msg: HTMLElement = this.parentDom.querySelector(".dp-volume-msg");
         let pointBg: HTMLElement = this.parentDom.querySelector(".dp-volume-contrller-bg");
         if (this.video.volume >= 0.99) {
-            point.style.bottom = point.parentElement.offsetHeight + "px";
-            pointBg.style.height = point.parentElement.offsetHeight + "px"
             this.video.volume = 1;
         }
         if (this.video.volume <= 0.01) {
-            point.style.bottom = "0px";
-            pointBg.style.height = "0px"
-
             this.video.volume = 0;
         }
         if (this.video.volume === 0) {
@@ -566,9 +565,13 @@ export default class Controller {
             (document as any).pictureInPictureEnabled &&
             !(this.video as any).disablePictureInPicture) {
             try {
+                // 检查有没有元素进入画中画
                 if ((document as any).pictureInPictureElement) {
+                    // 退出画中画
                     (document as any).exitPictureInPicture();
+                    return
                 }
+                // 进入画中画
                 (this.video as any).requestPictureInPicture();
             } catch (err) {
                 console.error(err);
@@ -578,20 +581,38 @@ export default class Controller {
 
     // 网页全屏
     documentFullScreenFn() {
-        if (this.video.parentElement.classList.contains("dp-webfullscreen")) {
+        // 首先判断网页是否进入全屏状态
+        // 如果进入全屏状态,退出全屏状态
+        let isFull = !!((document as any).webkitIsFullScreen || (document as any).mozFullScreen ||
+            (document as any).msFullscreenElement || document.fullscreenElement
+        );
+        isFull ? this.exitFullscreen() : "";
+
+        // 如果拥有dp-webfullscreen类名并且没有进入全屏退出网页全屏状态, 否则取消网页全屏状态
+        if (this.video.parentElement.classList.contains("dp-webfullscreen") && !isFull) {
             this.exitDocumentFullScreenFn();
         } else {
+            const html = document.querySelector('html')
+            const body = document.querySelector('body')
             this.video.parentElement.classList.add("dp-webfullscreen");
+            html.style.overflow = 'hidden'
+            html.style.height = '100%'
+            body.style.overflow = 'hidden'
+            body.style.height = '100%'
         }
         let {_parentSelf} = this.options;
         _parentSelf.recalculateDrawingPosition();
         this.changeActionTime(false);
 
+
     }
 
     exitDocumentFullScreenFn() {
-
         this.video.parentElement.classList.remove("dp-webfullscreen");
+        const html = document.querySelector('html')
+        const body = document.querySelector('body')
+        html.removeAttribute("style")
+        body.removeAttribute("style")
         let {_parentSelf} = this.options;
         _parentSelf.recalculateDrawingPosition();
         this.changeActionTime(false);
@@ -638,7 +659,7 @@ export default class Controller {
     }
 
     // 改变当前时间
-    changeActionTime(flag: boolean = true) {
+    changeActionTime(flag: boolean = true,isjump:boolean = false) {
         if (!this.timePoint || !this.timePointbg) {
             this.timePoint = this.contrllerDom.querySelector(".dp-time-contrller-point");
             this.timePointbg = this.contrllerDom.querySelector(".dp-time-contrller-bg");
@@ -650,7 +671,7 @@ export default class Controller {
         this.timePointbg.style.width = time / allTime * offsetWidth + "px";
         this.actionTime.innerText = formatTime(time);
         !this.video.paused && flag && (this.reqAFId = requestAnimationFrame(this.changeActionTime.bind(this)));
-        this.video.dispatchEvent(this.progressBarChange);
+        isjump?this.video.dispatchEvent(this.progressBarJumpChange):this.video.dispatchEvent(this.progressBarChange);
     }
 
     // 修改进度条
@@ -658,13 +679,16 @@ export default class Controller {
         let allTime = this.video.duration;
         let offsetWidth = this.contrllerDom.offsetWidth
         let basePro = allTime / offsetWidth;
+        let isJump = false;
         if (e) {
             this.video.currentTime += e.movementX * basePro;
+            isJump = true
         }
         if (offsetx !== undefined) {
             this.video.currentTime = offsetx * basePro;
+            isJump = true;
         }
-        this.changeActionTime()
+        this.changeActionTime(undefined,isJump)
     }
 
     // 进度条点击事件
@@ -691,10 +715,7 @@ export default class Controller {
         if (acItem.classList.contains("active")) {
             return;
         }
-        let playBackList = this.speadSelect.querySelectorAll('.dp-playback-rate-list')
-        for (let i = 0; i < playBackList.length; i++) {
-            playBackList[i].classList.remove("active")
-        }
+        this.speadSelect.querySelector('.dp-playback-rate-list.active').classList.remove("active")
         acItem.classList.add("active")
         acItem.parentElement.style.pointerEvents = "none";
         acItem.parentElement.style.opacity = "0";
