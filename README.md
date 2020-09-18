@@ -1,12 +1,12 @@
 # DPvideo
-一款集成弹幕,视频播放为一体的播放器,不对任何包拥有依赖,完全由ts编写
-使用canvas渲染video,操作videoApi实现播放功能 
-弹幕也是由canvas实现的
-[预览地址](http://hptn3l.coding-pages.com/dist/)
+一款集成弹幕,视频播放为一体的播放器,不对任何包拥有依赖,完全由ts编写  
+使用canvas渲染video,操作videoApi实现播放功能   
+弹幕也是由canvas实现的  
+[预览地址](http://hptn3l.coding-pages.com/dist/)  
 
-有时间具体写使用文档,目前可以去预览地址查看源码
-使用方式: 
-```html
+有时间具体写使用文档,目前可以去预览地址查看源码  
+使用方式:   
+```html  
 <div class="videoParent"></div>
 <script src="/dist/js/dp-video.min.js"></script>
 ```
