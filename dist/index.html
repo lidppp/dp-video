@@ -1,0 +1,162 @@
+<!doctype html><html lang="en"><meta><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Document</title><style>body {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .videoParent {
+        width: 700px;
+        height: 700px;
+        background: antiquewhite;
+        margin: 0 auto;
+    }</style><link href="/dist//css/style.css" rel="stylesheet"><body><div style="text-align:center;"><span>RGB调整</span> <label>R<input type="number" min="0" max="200" id="R" value="100" onchange="changeRgba(this.value,'R')"></label> <label>G<input type="number" min="0" max="200" id="G" value="100" onchange="changeRgba(this.value,'G')"></label> <label>B<input type="number" min="0" max="200" id="B" value="100" onchange="changeRgba(this.value,'B')"></label> <label>A<input type="number" min="0" max="1" id="A" value="1" onchange="changeRgba(this.value,'A')"></label></div><div class="videoParent"></div><div style="text-align:center;line-height: 1em"><p><button onclick="setBarrageList()">注入弹幕</button> <button onclick="barrageHide()">弹幕隐藏</button> <button onclick="barrageShow()">弹幕显示</button></p><p style="color: red;">* 注意注入弹幕会导致原弹幕消失,如果希望追加弹幕请使用joinBarrageList</p><p>追加弹幕会在视频播放到30秒出现</p><p></p><p></p><p><label><input type="radio" name="pos" value="top">top</label> <label><input type="radio" name="pos" value="bottom">bottom</label> <label><input type="radio" name="pos" value="move" checked="checked">move</label> <label><input type="color" id="color" value="#ffffff"> <span>选择颜色</span></label></p><span>输入弹幕</span> <input id="danmu"> <button onclick="sendDanmu()" id="pushDanmu">发送弹幕</button><p></p></div><script src="/dist/js/dp-video.js"></script><script src="/dist/js/dp-video.min.js"></script></body><script>// videoL.showBig("asdsad")
+    var videol = new dpVideo(
+        document.querySelector(".videoParent"),
+        [
+            "/dist/video/1.mp4",
+            {
+                defaultId: 1,
+                urlList: [
+                    {
+                        id: 1,
+                        url: "/dist/video/1.mp4",
+                        label: "清晰度1"
+                    },
+                    {
+                        id: 2,
+                        url: "/dist/video/mov_bbb.mp4",
+                        label: "清晰度2"
+                    }
+                ]
+            },
+            "/dist/video/mov_bbb.mp4"
+        ],
+        {
+            barrageList: [
+                {msg: "Liddsadppp2", timePoint: 0, color: "red", position: "move"},
+                {msg: "Liddsappp8", timePoint: 0, color: "red", position: "move"},
+                {msg: "Lidpdsadsapp12", timePoint: 0, color: "red", position: "move"},
+                {msg: "Lidpdaspp13", timePoint: 0, color: "red", position: "move"},
+                {msg: "Lidpdsadaspp9", timePoint: 0, color: "red", position: "move"},
+                {msg: "Liddsadasppp1", timePoint: 1, color: "blue", position: "move"},
+                {msg: "Lidpdaspp3", timePoint: 1, color: "red", position: "move"},
+                {msg: "Lidpdsasdapp4", timePoint: 2, color: "red", position: "move"},
+                {msg: "Lidppdasp5", timePoint: 3, color: "red", position: "move"},
+                {msg: "Liddsadasppp6", timePoint: 4, color: "red", position: "top"},
+                {msg: "Lidpdspp11", timePoint: 4, color: "red", position: "bottom"},
+                {msg: "Lidpdaspp7", timePoint: 5, color: "red", position: "bottom"},
+                {msg: "Liddsadasaaaaaaappp10", timePoint: 5, color: "red", position: "move"},
+                {msg: "Liddasdasppp10", timePoint: 7, color: "red", position: "move"},
+                {msg: "Lidpddddpp10", timePoint: 6, color: "red", position: "move"},
+                {msg: "Lidpdsadsapp14", timePoint: 11, color: "red", position: "top"},
+                {msg: "Lidpdsadpp15", timePoint: 13, color: "red", position: "bottom"},
+            ]
+        }
+    );
+
+
+    // // 播放器按钮测试用例
+    // var pause = document.querySelector('.pause');
+    // var play = document.querySelector('.play');
+    // var btn = document.querySelector('#play_box');
+    //
+    // btn.addEventListener('click', () => {
+    //     if (play.classList.contains("active")) {
+    //         play.classList.remove("active");
+    //         pause.classList.add("active");
+    //     } else {
+    //         pause.classList.remove("active");
+    //         play.classList.add("active");
+    //     }
+    // })
+
+    // 设置谷歌媒体控制器的封面
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: '11111',
+            artist: '2222',
+            album: 'W333',
+            artwork: [
+                {src: 'https://dummyimage.com/384x384', sizes: '384x384', type: 'image/png'},
+            ]
+        });
+        // navigator.mediaSession.setActionHandler('play', function() {
+        //     console.log("hello")
+        // });
+        // navigator.mediaSession.setActionHandler('pause', function() {
+        //     console.log("hello")
+        //
+        // });
+        // navigator.mediaSession.setActionHandler('seekbackward', function() {});
+        // navigator.mediaSession.setActionHandler('seekforward', function() {});
+        // // navigator.mediaSession.setActionHandler('previoustrack', function() {});
+        // // navigator.mediaSession.setActionHandler('nexttrack', function() {});
+    }
+
+
+    /*
+    * 弹幕实例代码
+    * */
+
+    // 获取弹幕input
+    let danmuInput = document.querySelector("#danmu")
+
+
+    /**
+     *
+     * 发送弹幕
+     * @param event
+     */
+    function sendDanmu() {
+        let msg = danmuInput.value;
+        let timePoint = videol.currentTime;
+        let color = document.querySelector("#color").value;
+        let positionDoms = document.querySelectorAll("input[name='pos']"), position;
+        for (let i = 0; i < positionDoms.length; i++) {
+            if (positionDoms[i].checked) {
+                position = positionDoms[i].value
+            }
+        }
+        videol.joinBarrageList({
+            msg, timePoint, color, position
+        })
+    }
+
+
+    /**
+     * 注入弹幕
+     */
+
+    function setBarrageList() {
+        videol.setBarrageList(
+            [
+                {msg: "追加弹幕: Liddsadppp2", timePoint: 30, color: "red", position: "move"},
+                {msg: "追加弹幕: Liddsappp8", timePoint: 30, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpdsadsapp12", timePoint: 30, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpdaspp13", timePoint: 30, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpdsadaspp9", timePoint: 30, color: "red", position: "move"},
+                {msg: "追加弹幕: Liddsadasppp1", timePoint: 31, color: "blue", position: "move"},
+                {msg: "追加弹幕: Lidpdaspp3", timePoint: 31, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpdsasdapp4", timePoint: 32, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidppdasp5", timePoint: 33, color: "red", position: "move"},
+                {msg: "追加弹幕: Liddsadasppp6", timePoint: 34, color: "red", position: "top"},
+                {msg: "追加弹幕: Lidpdspp11", timePoint: 34, color: "red", position: "bottom"},
+                {msg: "追加弹幕: Lidpdaspp7", timePoint: 35, color: "red", position: "bottom"},
+                {msg: "追加弹幕: Liddsadasaaaaaaappp10", timePoint: 35, color: "red", position: "move"},
+                {msg: "追加弹幕: Liddasdasppp10", timePoint: 37, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpddddpp10", timePoint: 36, color: "red", position: "move"},
+                {msg: "追加弹幕: Lidpdsadsapp14", timePoint: 31, color: "red", position: "top"},
+                {msg: "追加弹幕: Lidpdsadpp15", timePoint: 33, color: "red", position: "bottom"},
+            ]
+        )
+    }
+
+
+    function barrageHide(){
+        this.videol.barrage.hide();
+    }
+    function barrageShow(){
+        this.videol.barrage.show();
+    }
+
+    function changeRgba(val,key) {
+        this.videol.filterVal[key] = val;
+    }</script></html>
