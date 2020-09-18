@@ -359,7 +359,11 @@ export default class Controller {
                     className: ["dp-time-contrller-box"],
                     methods: {
                         click: (e) => {
+                            // this.pause()
                             this.progressBarClick(e)
+                            // setTimeout(()=>{
+                            //     this.play()
+                            // },30)
                         }
                     },
                     children: [
@@ -370,6 +374,7 @@ export default class Controller {
                                 mousedown: (e) => {
                                     e.stopPropagation();
                                     let _that = this
+                                    // this.pause()
 
                                     function mouseMoveFn(e) {
                                         e.stopPropagation();
@@ -378,6 +383,9 @@ export default class Controller {
 
                                     function mouseUpFn(e) {
                                         e.stopPropagation();
+                                        // setTimeout(()=>{
+                                        //     _that.play()
+                                        // })
                                         window.removeEventListener("mousemove", mouseMoveFn)
                                         window.removeEventListener("mouseup", mouseUpFn)
                                     }
@@ -435,10 +443,17 @@ export default class Controller {
             }
         })
 
+        // 父元素获取焦点时激活快捷键
+        this.parentDom.addEventListener("focus", ()=>{
+            window.addEventListener("keydown", windowKeyDown)
+        })
 
-
-        // 绑定window按键事件
-        window.addEventListener("keydown", (e) => {
+        // 父元素失去焦点时移除快捷键
+        this.parentDom.addEventListener("blur",()=>{
+            window.removeEventListener("keydown", windowKeyDown)
+        })
+        // 快捷键处理事件
+        const windowKeyDown = (e) => {
             // e.preventDefault();
             if (e.altKey && e.ctrlKey && e.key === "Enter") {
                 // alt + ctrl + enter  全屏
@@ -499,11 +514,33 @@ export default class Controller {
                 this.changeVolumeFn(this.video.volume -= 0.1);
                 return;
             }
-        })
+        }
 
+        // 视口大小改变的时候
         window.addEventListener("resize",()=>{
             this.changeActionTime()
         })
+
+
+
+        // 父元素鼠标移入移出事件
+        let timeOutKey:number = undefined;
+        const controllerShowFn = () => {
+            window.clearTimeout(timeOutKey);
+            this.show();
+            timeOutKey = window.setTimeout(()=>{
+                this.hide()
+            },2000)
+        }
+        this.parentDom.addEventListener("mouseenter", controllerShowFn)
+        // 父元素鼠标移动事件
+        this.parentDom.addEventListener("mousemove",controllerShowFn)
+        // 父元素鼠标移出事件
+        this.parentDom.addEventListener("mouseleave", ()=>{
+            window.clearTimeout(timeOutKey);
+            this.hide()
+        })
+        // 鼠标移入控制条,保持控制条显示 已转入css控制
     }
 
     // 播放
@@ -737,6 +774,18 @@ export default class Controller {
         this.timePoint = this.timePointbg = null
         this.contrllerDom.parentElement.removeChild(this.contrllerDom);
         this.creatContrller();
+    }
+
+    // 进度条隐藏
+    hide(){
+        this.parentDom.style.cursor = "none";
+        this.contrllerDom.style.opacity = "0";
+    }
+
+    // 进度条显示
+    show(){
+        this.parentDom.style.cursor = "auto";
+        this.contrllerDom.style.opacity = "1";
     }
 
 

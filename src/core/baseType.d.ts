@@ -18,7 +18,9 @@ export interface optionsFormat {
     barrageShow?:boolean, // 是否开启弹幕功能, 默认为true
     barrageList?:Array<{
         msg:"",//弹幕内容
-        time:Number // 弹幕发送时间,相对于视频的毫秒数
+        timePoint:number, // 弹幕发送时间,相对于视频的毫秒数
+        color?:string,
+        position:"move"|"top"|"bottom"
     }>// 弹幕数组默认为空,上方标识弹幕数据格式
     barrageScope?: number, // 默认为1500毫秒, 在可视区域停留时间
     title?: {

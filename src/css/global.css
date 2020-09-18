@@ -1,18 +1,18 @@
 .dp-video-player * {
     user-select: none;
     /*word-break: keep-all;*/
-    white-space:nowrap;
+    white-space: nowrap;
 }
 
 
-.dp-play-btn, .dp-pause-btn, .dp-volume, .dp-popWindow-player, .dp-document-full-screen, .dp-window-full-screen ,.dp-next-btn{
+.dp-play-btn, .dp-pause-btn, .dp-volume, .dp-popWindow-player, .dp-document-full-screen, .dp-window-full-screen, .dp-next-btn {
     font-size: 26px;
     line-height: 44px;
     display: none;
     cursor: pointer;
 }
 
-.dp-play-btn.active, .dp-pause-btn.active, .dp-volume.active, .dp-popWindow-player.active, .dp-document-full-screen.active, .dp-window-full-screen.active ,.dp-next-btn.active{
+.dp-play-btn.active, .dp-pause-btn.active, .dp-volume.active, .dp-popWindow-player.active, .dp-document-full-screen.active, .dp-window-full-screen.active, .dp-next-btn.active {
     display: block;
 }
 
@@ -41,6 +41,11 @@
     color: #fff;
     margin: 0 auto;
     z-index: 3;
+    transition: all 0.3s;
+}
+.dp-contrller:hover{
+    opacity: 1 !important;
+    cursor: auto !important;
 }
 
 .dp-flexbox {
@@ -254,6 +259,29 @@
 
 /*选择清晰度*/
 
-.dp-definition-base{
+.dp-definition-base {
     width: auto;
+}
+
+/*右键菜单*/
+.dp-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    color: #fff;
+    text-align: center;
+}
+
+.dp-menu > div {
+    height: 30px;
+    line-height: 30px;
+    transition: all 0.3s;
+    padding: 0 20px;
+    cursor: pointer;
+
+}
+.dp-menu > div:hover {
+    background: rgba(0, 0, 0, 0.6);
 }

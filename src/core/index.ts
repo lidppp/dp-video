@@ -4,7 +4,7 @@ import {
 } from "./baseType"
 import Controller from "./creatController";
 import Barrage,{BarrageBaseType} from "./barrage";
-import {whatUrlType, styleList} from "./utils"
+import {whatUrlType, styleList,render} from "./utils"
 
 export default class Core {
     // 传入的父级dom节点
@@ -77,7 +77,22 @@ export default class Core {
     // 弹幕
     barrage:Barrage = undefined;
 
+    // 当前时间点:
+    currentTime:number = 0;
 
+    // 菜单
+    menu:HTMLElement = null;
+
+    // 镜像反转
+    reversal:boolean = false;
+
+    // 滤镜功能的值
+    filterVal = {
+        R:100,
+        G:100,
+        B:100,
+        A:100,
+    }
 
     constructor(parentNode: HTMLElement, urlList: UrlListType, options?: optionsFormat) {
         // 初始化外部传入的dom
@@ -100,25 +115,9 @@ export default class Core {
             this.setChildDom(urlList as string);
         }
 
-        let danmuArr:Array<BarrageBaseType> = [
-            {msg:"Lidppp",timePoint:1,color:"blue",position:"move"},
-            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:1,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:2,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:3,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:4,color:"red",position:"top"},
-            {msg:"Lidppp",timePoint:5,color:"red",position:"bottom"},
-            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:5,color:"red",position:"top"},
-            {msg:"Lidppp",timePoint:4,color:"red",position:"bottom"},
-            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:0,color:"red",position:"move"},
-            {msg:"Lidppp",timePoint:11,color:"red",position:"top"},
-            {msg:"Lidppp",timePoint:13,color:"red",position:"bottom"},
-        ]
+
         // 创建弹幕
-        this.barrage = new Barrage(this.lp_player_box,danmuArr,this.baseOptions)
+        this.barrage = new Barrage(this.lp_player_box,this.baseOptions.barrageList,this.baseOptions)
 
         // 创建控制条
         this.controller = new Controller(this.videoDom, this.lp_player_box, this.baseOptions);
@@ -143,12 +142,15 @@ export default class Core {
     // 设置创建出来的元素的数据
     setChildDom(urlList: string): void {
         this.lp_player_box.classList.add("dp-video-player")
+        this.lp_player_box.setAttribute("tabindex","0")
+        this.lp_player_box.setAttribute("hidefocus","true")
         styleList(this.lp_player_box, {
             width: "100%",
             height: "100%",
             background: '#000',
             position: "relative",
-            overflowL: "hidden"
+            overflowL: "hidden",
+            outline:"0"
         })
 
         styleList(this.videoDom, {width: this.p_width + "px", height: this.p_height + "px", display: 'none'})
@@ -173,10 +175,21 @@ export default class Core {
             return;
         }
         this.countWhereDrop()
-        this.centerCan.clearRect(this.drup_left, this.drup_top, this.drup_width, this.drup_height)
+        this.centerCan.clearRect(0, 0, this.p_width, this.p_height)
+        if(this.reversal){
+            this.centerCan.translate(this.p_width, 0);
+            this.centerCan.scale(-1, 1)
+        }
         this.centerCan.drawImage(this.videoDom, this.drup_left, this.drup_top, this.drup_width, this.drup_height);
+        if(this.reversal){
+            this.centerCan.translate(this.p_width, 0);
+            this.centerCan.scale(-1, 1)
+        }
         let imageData: ImageData = this.centerCan.getImageData(0, 0, this.p_width, this.p_height);
-        this.finalCan.putImageData(imageData, 0, 0)
+        this.canvasFilter(imageData,this.filterVal)
+        this.finalCan.putImageData(imageData, 0, 0);
+        // 添加当前时间节点
+        this.currentTime = Math.ceil(this.videoDom.currentTime+0.5);
         this.reqAFId = requestAnimationFrame(this.listenVideo.bind(this));
     }
 
@@ -185,7 +198,7 @@ export default class Core {
         this.videoDom.addEventListener('canplay', () => {
             this.video_width = this.videoDom.videoWidth;
             this.video_height = this.videoDom.videoHeight;
-            this.recalculateDrawingPosition(false)
+            this.recalculateDrawingPosition(false,false)
 
         })
         this.videoDom.addEventListener("play", () => {
@@ -200,10 +213,101 @@ export default class Core {
         window.addEventListener("resize", () => {
             this.recalculateDrawingPosition(false)
         })
+
+        window.addEventListener("click", () => {
+            this.delMenu();
+        })
+
+        this.lp_player_box.addEventListener("click",(e)=>{
+            if(e.target === this.barrage.getElement() || e.target===this.finalCanvasDom){
+                if (this.videoDom.paused) {
+                    this.controller.play();
+                } else {
+                    this.controller.pause();
+                }
+            }
+        })
+
+        this.lp_player_box.addEventListener("contextmenu",(event)=>{
+            event.preventDefault(); // 阻止默认事件
+            this.delMenu();
+            console.log(event)
+            this.menu = render({
+                tag:"div",
+                className:["dp-menu"],
+                style:{
+                    left:event.offsetX+"px",
+                    top:event.offsetY+"px"
+                },
+                children:[
+                    {
+                        tag:"div",
+                        innerText:"水平镜像翻转",
+                        methods:{
+                            click:(e)=>{
+                                e.stopPropagation();
+                                this.delMenu();
+                                this.reversal = !this.reversal;
+                                this.listenVideo()
+                            }
+                        }
+                    },
+                    {
+                        tag:"div",
+                        innerText:"色彩调整(未实现)",
+                        methods:{
+                            click:(e)=>{
+                                e.stopPropagation();
+                                this.delMenu();
+                                console.log("未实现")
+                            }
+                        }
+                    },
+                    {
+                        tag:"div",
+                        innerText:"github",
+                        methods:{
+                            click:(e)=>{
+                                e.stopPropagation();
+                                this.delMenu();
+                                window.open("https://github.com/lidppp/dp-video")
+                            }
+                        }
+                    },
+                    {
+                        tag:"div",
+                        innerText:"博客地址",
+                        methods:{
+                            click:(e)=>{
+                                e.stopPropagation();
+                                this.delMenu();
+                                window.open("https://www.lidppp.com")
+                            }
+                        }
+                    },
+                ]
+            });
+            this.lp_player_box.appendChild(this.menu)
+        })
     }
 
-    // 计算绘图位置, 不计算会导致渲染出来的画面变形
-    countWhereDrop(flag: boolean = true): void {
+    /**
+     * 删除menu
+     */
+    delMenu():void{
+
+        if(this.menu && this.menu.parentElement){
+            this.menu.parentElement.removeChild(this.menu);
+        }
+        this.menu = undefined;
+    }
+
+    /**
+     * 计算绘图位置, 不计算会导致渲染出来的画面变形
+     * @param flag 是否强制刷新
+     * @param dispatch 是否触发事件
+     */
+    countWhereDrop(flag: boolean = true,dispatch:boolean=true): void {
         if ((flag && this.p_width == this.lp_player_box.offsetWidth && this.p_width != null) || (flag && this.p_height == this.lp_player_box.offsetHeight && this.p_height != null)) {
             return
         }
@@ -245,13 +349,18 @@ export default class Core {
             this.drup_left = Math.abs((this.p_width - this.drup_width)) / 2;
         }
         // 父元素大小改变事件触发
-        this.lp_player_box.dispatchEvent(this.parentSizeChange())
+        dispatch && this.lp_player_box.dispatchEvent(this.parentSizeChange())
 
     }
 
-    // 重新计算绘画位置并且重绘
-    recalculateDrawingPosition(flag: boolean = true) {
-        this.countWhereDrop(flag);
+
+    /**
+     * 重新计算绘画位置并且重绘
+     * @param flag 是否强制刷新
+     * @param dispatch 是否触发事件
+     */
+    recalculateDrawingPosition(flag: boolean = true,dispatch:boolean=true) {
+        this.countWhereDrop(flag,dispatch);
         this.listenVideo()
         setTimeout(() => {
             cancelAnimationFrame(this.reqAFId);
@@ -287,10 +396,32 @@ export default class Core {
     /**
      * 更新弹幕
      */
-    setBarrage(barrageList:Array<BarrageBaseType>){
+    setBarrageList(barrageList:Array<BarrageBaseType>){
         this.barrage.setRenderBarrageArray(barrageList);
     }
 
+    /**
+     * 加入弹幕
+     */
+    joinBarrageList(barrageList: Array<BarrageBaseType> | BarrageBaseType){
+        this.barrage.joinRenderBarrageArray(barrageList);
+    }
+
+    canvasFilter(arr:ImageData,filterVal:any){
+        if(!filterVal || filterVal.R === 100 && filterVal.G === 100 && filterVal.B === 100 && filterVal.A === 100){
+            return;
+        }
+        let data = arr.data
+        let r = filterVal.R / 100,
+            g = filterVal.G/ 100,
+            b = filterVal.B/ 100;
+        for(var i = 0;i<data.length;i+=4){
+            data[i] = data[i] * r;
+            data[i+1] = data[i+1] * g;
+            data[i+2] = data[i+2] * b;
+            data[i+3] = data[i+3] * filterVal.A;
+        }
+    }
 
     // 创建拓展接口, 后续可能会用到 先写上
     /*
